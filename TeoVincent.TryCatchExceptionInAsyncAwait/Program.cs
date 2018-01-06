@@ -1,41 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TeoVincent.TryCatchExceptionInAsyncAwait
 {
     class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            FuncCatchExAsync("1000");
-            WrongTryCatchException();
+            DoSafeThingAsync();
             Console.ReadLine();
         }
 
-        static Task<int> StrToIntAsync(string integer)
-        {
-            Func<object, int> strToInt = (object value) =>
-            {
-                return int.Parse((string)value);
-            };
-            return Task<int>.Factory.StartNew(strToInt, integer);
-        }
-
-        static async Task<int> ExceptionFuncAsync(string integer)
-        {
-            int result = await StrToIntAsync(integer);
-            throw new Exception("My exception.");
-            return result;
-        }
-
-        static async void FuncCatchExAsync(string integer)
+        private static async void DoSafeThingAsync()
         {
             try
             {
-                int result = await ExceptionFuncAsync(integer);
+                //if you want to see wrongly safe method uncomment this line below
+                //await DoDangerousThingInNewTask();
+                await DoDangerousThingAsync();
+                Console.WriteLine("next calculations and logic");
             }
             catch (Exception ex)
             {
@@ -43,22 +27,25 @@ namespace TeoVincent.TryCatchExceptionInAsyncAwait
             }
         }
 
-        static Task GetTaskWithException()
+        private static Task DoDangerousThingInNewTask()
         {
-            Action action = () => { throw new Exception("My uncatched ex"); };
-            return Task.Factory.StartNew(action);
+            return Task<int>.Factory.StartNew(() =>
+            {
+                SimpulateLongRunningAsync();
+                throw new Exception("the intentional exception");
+            });
         }
 
-        static async Task WrongTryCatchException()
+        private static async Task DoDangerousThingAsync()
         {
-            try
-            {
-                await GetTaskWithException();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+            await SimpulateLongRunningAsync();
+            throw new Exception("the intentional exception");
+        }
+
+        private static async Task SimpulateLongRunningAsync()
+        {
+            Console.WriteLine("simpulate long running operation");
+            Thread.Sleep(1000);
         }
     }
 }
